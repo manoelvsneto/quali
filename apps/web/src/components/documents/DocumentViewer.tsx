@@ -6,7 +6,8 @@ import { Document, Code, Quotation } from '../../types';
 import { CodeList } from '../codes/CodeList';
 import { QuotationModal } from './QuotationModal';
 import { PDFViewer } from './PDFViewer';
-import { Trash2, ArrowLeft, BookOpen } from 'lucide-react';
+import { AIChatPanel } from './AIChatPanel';
+import { Trash2, ArrowLeft, BookOpen, MessageSquare } from 'lucide-react';
 
 export const DocumentViewer = () => {
   const { id } = useParams();
@@ -16,6 +17,7 @@ export const DocumentViewer = () => {
   const [selectedText, setSelectedText] = useState<{ start: number; end: number; text: string } | null>(null);
   const [showQuotationModal, setShowQuotationModal] = useState(false);
   const [showBibtex, setShowBibtex] = useState(false);
+  const [rightPanel, setRightPanel] = useState<'quotations' | 'ai'>('quotations');
 
   const { data: document } = useQuery({
     queryKey: ['document', id],
@@ -235,33 +237,64 @@ export const DocumentViewer = () => {
         </div>
 
         {/* Right: Quotations */}
-        <div className="w-80 border-l bg-white p-4 overflow-y-auto">
-          <h3 className="font-semibold mb-4">Quotations ({quotations?.length || 0})</h3>
-          <div className="space-y-3">
-            {quotations?.map((q) => (
-              <div key={q._id} className="p-3 bg-gray-50 rounded-lg text-sm group relative">
-                <button
-                  onClick={() => handleDeleteQuotation(q._id)}
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 text-red-600 hover:bg-red-100 rounded"
-                  title="Delete quotation"
-                >
-                  <Trash2 size={14} />
-                </button>
-                
-                <div className="font-medium mb-2 pr-6">"{q.exactText.slice(0, 50)}..."</div>
-                <div className="flex flex-wrap gap-1">
-                  {q.codeIds.map((code) => (
-                    <span
-                      key={code._id}
-                      className="px-2 py-1 rounded text-xs text-white"
-                      style={{ backgroundColor: code.color }}
+        <div className="w-80 border-l bg-white flex flex-col">
+          {/* Tabs */}
+          <div className="border-b flex">
+            <button
+              onClick={() => setRightPanel('quotations')}
+              className={`flex-1 px-4 py-3 text-sm font-medium ${
+                rightPanel === 'quotations'
+                  ? 'border-b-2 border-indigo-600 text-indigo-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Quotations ({quotations?.length || 0})
+            </button>
+            <button
+              onClick={() => setRightPanel('ai')}
+              className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center gap-2 ${
+                rightPanel === 'ai'
+                  ? 'border-b-2 border-indigo-600 text-indigo-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <MessageSquare size={16} />
+              AI Chat
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {rightPanel === 'quotations' ? (
+              <div className="space-y-3">
+                {quotations?.map((q) => (
+                  <div key={q._id} className="p-3 bg-gray-50 rounded-lg text-sm group relative">
+                    <button
+                      onClick={() => handleDeleteQuotation(q._id)}
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 text-red-600 hover:bg-red-100 rounded"
+                      title="Delete quotation"
                     >
-                      {code.name}
-                    </span>
-                  ))}
-                </div>
+                      <Trash2 size={14} />
+                    </button>
+                    
+                    <div className="font-medium mb-2 pr-6">"{q.exactText.slice(0, 50)}..."</div>
+                    <div className="flex flex-wrap gap-1">
+                      {q.codeIds.map((code) => (
+                        <span
+                          key={code._id}
+                          className="px-2 py-1 rounded text-xs text-white"
+                          style={{ backgroundColor: code.color }}
+                        >
+                          {code.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <AIChatPanel documentId={id!} />
+            )}
           </div>
         </div>
 
